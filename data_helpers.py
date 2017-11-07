@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import re
+from sklearn.preprocessing import LabelEncoder
 import itertools
 from collections import Counter
 
@@ -55,7 +56,8 @@ def load_accounting_data(data_file_path):
     """
     df = pd.read_csv(data_file_path)
     x = df['description'].tolist()
-    y = df['category_name'].tolist()
+    le = LabelEncoder()
+    y = le.fit_transform(df['category_name'].tolist())
     return [x, y]
 
 
