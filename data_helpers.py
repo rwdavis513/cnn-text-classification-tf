@@ -1,3 +1,4 @@
+import pandas as pd
 import numpy as np
 import re
 import itertools
@@ -43,6 +44,19 @@ def load_data_and_labels(positive_data_file, negative_data_file):
     negative_labels = [[1, 0] for _ in negative_examples]
     y = np.concatenate([positive_labels, negative_labels], 0)
     return [x_text, y]
+
+
+def load_accounting_data(data_file_path):
+    """
+    Loads Accounting Transactions in a csv format. Using the "Description" column as the input data and the
+      "category_name" column as the response.
+    :param data_file_path: full path to a data file
+    :return: two item list with a list of the Descriptions for X and a list of the corresponding category names
+    """
+    df = pd.read_csv(data_file_path)
+    x = df['description'].tolist()
+    y = df['category_name'].tolist()
+    return [x, y]
 
 
 def batch_iter(data, batch_size, num_epochs, shuffle=True):
