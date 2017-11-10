@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
 import re
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-import itertools
-from collections import Counter
+from config import FLAGS
+from tensorflow.contrib import learn
 
 
 def clean_str(string):
@@ -27,7 +28,7 @@ def clean_str(string):
     return string.strip().lower()
 
 
-def load_data_and_labels(positive_data_file, negative_data_file):
+def load_movie_reviews(positive_data_file, negative_data_file):
     """
     Loads MR polarity data from files, splits the data into words and generates labels.
     Returns split sentences and labels.
@@ -79,3 +80,38 @@ def batch_iter(data, batch_size, num_epochs, shuffle=True):
             start_index = batch_num * batch_size
             end_index = min((batch_num + 1) * batch_size, data_size)
             yield shuffled_data[start_index:end_index]
+
+
+def load_data(dataset_name='movie_reviews'):
+    # Load data
+    print("Loading data...")
+    if dataset_name == 'movie_reviews':
+        x_text, y = load_movie_reviews(FLAGS.positive_data_file, FLAGS.negative_data_file)
+    elif dataset_name == 'accounting_data':
+        x_text, y = load_accounting_data(FLAGS.accounting_data_file)
+    else:
+        raise Exception("{} dataset not found.".format(dataset_name))
+
+    # Build vocabulary
+    max_document_length = max([len(x.split(" ")) for x in x_text])
+    vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
+    x = np.array(list(vocab_processor.fit_transform(x_text)))
+    print("Vocabulary Size: {:d}".format(len(vocab_processor.vocabulary_)))
+
+    # Split train/test set
+    x_train, x_dev, y_train, y_dev = train_test_split(x, y)
+    print("Train/Dev split: {:d}/{:d}".format(len(y_train), len(y_dev)))
+
+    return (x_train, x_dev, y_train, y_dev), vocab_processor
+
+
+def get_num_classes(y_train):
+    """
+    Hack to check if there is only one class.
+    :param y_train:
+    :return:
+    """
+    try:
+        return y_train.shape[1]
+    except KeyError:
+        return 1

@@ -1,8 +1,7 @@
 *.npy
 runs/
-data/line-items*
 data/
-
+.idea
 # Created by https://www.gitignore.io/api/python,ipythonnotebook
 
 ### Python ###
@@ -15,6 +14,8 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+.env
+.idea
 .Python
 env/
 build/
