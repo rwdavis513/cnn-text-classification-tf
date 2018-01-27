@@ -90,7 +90,7 @@ def step(x_batch, y_batch, train_or_dev='train', writer=None):
 # ==================================================
 
 if __name__ == '__main__':
-    (x_train, x_dev, y_train, y_dev), vocab_processor = load_data()
+    (x_train, x_dev, y_train, y_dev), vocab_processor = load_data('accounting_data')
 
     with tf.Graph().as_default():
         session_conf = tf.ConfigProto(

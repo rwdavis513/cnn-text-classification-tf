@@ -59,6 +59,7 @@ def load_accounting_data(data_file_path):
     x = df['description'].tolist()
     le = LabelEncoder()
     y = le.fit_transform(df['category_name'].tolist())
+    y = y.reshape((y.shape[0], 1))   # Transform from (?, ) to (?, 1)
     return [x, y]
 
 
@@ -114,4 +115,7 @@ def get_num_classes(y_train):
     try:
         return y_train.shape[1]
     except KeyError:
+        return 1
+    except IndexError:
+        print(y_train)
         return 1
