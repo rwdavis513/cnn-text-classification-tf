@@ -1,4 +1,4 @@
-from data_helpers import load_accounting_data
+from data_helpers import load_accounting_data, load_data
 import config
 import os
 
@@ -10,3 +10,7 @@ def test_load_accounting_data():
     assert type(xy_list) == list
     x, y = xy_list
     assert len(x) == len(y)
+
+
+def test_load_data():
+    (x_train, x_dev, y_train, y_dev), vocab_processor = load_data('accounting_data')

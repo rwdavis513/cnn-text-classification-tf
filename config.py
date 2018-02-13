@@ -1,5 +1,6 @@
 import tensorflow as tf
 import os
+from os.path import join
 
 try:
     DATA_DIR = os.environ['CNN_TEXT_DATA_DIR']
@@ -16,7 +17,7 @@ assert os.path.exists(DATA_DIR)
 tf.flags.DEFINE_float("dev_sample_percentage", .1, "Percentage of the training data to use for validation")
 tf.flags.DEFINE_string("positive_data_file", "./data/rt-polaritydata/rt-polarity.pos", "Data source for the positive data.")
 tf.flags.DEFINE_string("negative_data_file", "./data/rt-polaritydata/rt-polarity.neg", "Data source for the negative data.")
-tf.flags.DEFINE_string("accounting_data_file", "./data/line-items-5000.csv", "Accounting dataset: Transactions + Categories")
+tf.flags.DEFINE_string("accounting_data_file", join(DATA_DIR, "line-items-5000.csv"), "Accounting dataset: Transactions + Categories")
 
 
 # Model Hyperparameters
@@ -37,7 +38,7 @@ tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device 
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
 FLAGS = tf.flags.FLAGS
-FLAGS._parse_flags()
+# FLAGS._parse_flags()
 print("\nParameters:")
 for attr, value in sorted(FLAGS.__flags.items()):
     print("{}={}".format(attr.upper(), value))
