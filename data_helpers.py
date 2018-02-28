@@ -56,11 +56,13 @@ def load_accounting_data(data_file_path):
     :return: two item list with a list of the Descriptions for X and a list of the corresponding category names
     """
     df = pd.read_csv(data_file_path)
+    df = df[~df['description'].isnull()]
+    print("Raw data shape: {}".format(df.shape))
     x = df['description'].tolist()
     le = LabelEncoder()
     y = le.fit_transform(df['category_name'].tolist())
     y = y.reshape((y.shape[0], 1))   # Transform from (?, ) to (?, 1)
-    return [x, y]
+    return x, y
 
 
 def batch_iter(data, batch_size, num_epochs, shuffle=True):
@@ -83,22 +85,43 @@ def batch_iter(data, batch_size, num_epochs, shuffle=True):
             yield shuffled_data[start_index:end_index]
 
 
-def load_data(dataset_name='movie_reviews'):
+def calculate_max_length(x_text):
+    """
+    Caculates the maximum length
+    :param x_text:
+    :return:
+    """
+    x_lengths = []
+    for x in x_text:
+        try:
+            length = len(x.split(" "))
+        except AttributeError as e:
+            print("error: {}".format(e))
+            print(x)
+            length = 1
+        x_lengths.append(length)
+    return max(x_lengths)
+
+
+def load_data():
     # Load data
     print("Loading data...")
-    if dataset_name == 'movie_reviews':
-        x_text, y = load_movie_reviews(FLAGS.positive_data_file, FLAGS.negative_data_file)
-    elif dataset_name == 'accounting_data':
+    if FLAGS.accounting_data_file:
+        print("Loading accounting data...")
         x_text, y = load_accounting_data(FLAGS.accounting_data_file)
     else:
-        raise Exception("{} dataset not found.".format(dataset_name))
+        print("Loading movie reviews...")
+        x_text, y = load_movie_reviews(FLAGS.positive_data_file, FLAGS.negative_data_file)
 
+    print("x_text: {} y: {}".format(len(x_text), len(y)))
     # Build vocabulary
-    max_document_length = max([len(x.split(" ")) for x in x_text])
+    max_document_length = calculate_max_length(x_text)
+
     vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
     x = np.array(list(vocab_processor.fit_transform(x_text)))
     print("Vocabulary Size: {:d}".format(len(vocab_processor.vocabulary_)))
 
+    print("x: {} y: {}".format(x.shape, len(y)))
     # Split train/test set
     x_train, x_dev, y_train, y_dev = train_test_split(x, y)
     print("Train/Dev split: {:d}/{:d}".format(len(y_train), len(y_dev)))

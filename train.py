@@ -80,17 +80,22 @@ def step(x_batch, y_batch, train_or_dev='train', writer=None):
         _, step_num, summaries, loss, accuracy = sess.run(step_list, feed_dict)
     elif train_or_dev == 'dev':
         step_num, summaries, loss, accuracy = sess.run(step_list, feed_dict)
+    else:
+        loss = 0
+        accuracy = 0
+        summaries = 0
+        step_num = None
     time_str = datetime.datetime.now().isoformat()
-    print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step_num, loss, accuracy))
     if writer:
         writer.add_summary(summaries, step_num)
-
+    return time_str, step_num, loss, accuracy
 
 # Training
 # ==================================================
 
 if __name__ == '__main__':
-    (x_train, x_dev, y_train, y_dev), vocab_processor = load_data('accounting_data')
+    print(FLAGS.accounting_data_file)
+    (x_train, x_dev, y_train, y_dev), vocab_processor = load_data()
 
     with tf.Graph().as_default():
         session_conf = tf.ConfigProto(
@@ -122,11 +127,14 @@ if __name__ == '__main__':
             # Training loop. For each batch...
             for batch in batches:
                 x_batch, y_batch = zip(*batch)
-                step(x_batch, y_batch, train_or_dev='train')
+                time_str, step_num, loss, accuracy = step(x_batch, y_batch, train_or_dev='train')
                 current_step = tf.train.global_step(sess, global_step)
+                if step_num % 10 == 0:
+                    print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step_num, loss, accuracy))
                 if current_step % FLAGS.evaluate_every == 0:
                     print("\nEvaluation:")
-                    step(x_dev, y_dev, train_or_dev='dev', writer=dev_summary_writer)
+                    time_str, step_num, loss, accuracy = step(x_dev, y_dev, train_or_dev='dev', writer=dev_summary_writer)
+                    print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step_num, loss, accuracy))
                     print("")
                 if current_step % FLAGS.checkpoint_every == 0:
                     path = saver.save(sess, checkpoint_prefix, global_step=current_step)

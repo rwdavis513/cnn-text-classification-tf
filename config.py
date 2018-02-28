@@ -17,7 +17,7 @@ assert os.path.exists(DATA_DIR)
 tf.flags.DEFINE_float("dev_sample_percentage", .1, "Percentage of the training data to use for validation")
 tf.flags.DEFINE_string("positive_data_file", "./data/rt-polaritydata/rt-polarity.pos", "Data source for the positive data.")
 tf.flags.DEFINE_string("negative_data_file", "./data/rt-polaritydata/rt-polarity.neg", "Data source for the negative data.")
-tf.flags.DEFINE_string("accounting_data_file", join(DATA_DIR, "line-items-5000.csv"), "Accounting dataset: Transactions + Categories")
+tf.flags.DEFINE_string("accounting_data_file", None, "Accounting dataset: Transactions + Categories")
 
 
 # Model Hyperparameters
@@ -37,9 +37,22 @@ tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (d
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
+
+# Parameters
+# ==================================================
+
+# Eval Parameters
+tf.flags.DEFINE_string("checkpoint_dir", "", "Checkpoint directory from training run")
+tf.flags.DEFINE_boolean("eval_train", False, "Evaluate on all training data")
+
 FLAGS = tf.flags.FLAGS
 # FLAGS._parse_flags()
 print("\nParameters:")
 for attr, value in sorted(FLAGS.__flags.items()):
     print("{}={}".format(attr.upper(), value.value))
 print("")
+
+print(FLAGS.accounting_data_file)
+
+if __name__ == '__main__':
+    pass
