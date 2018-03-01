@@ -49,7 +49,8 @@ def load_data_and_labels(positive_data_file, negative_data_file):
 def load_data_and_labels_text(filename):
     """Load sentences and labels"""
     df = pd.read_csv(filename, compression='zip', dtype={'consumer_complaint_narrative': object})
-    selected = ['product', 'consumer_complaint_narrative']
+    #selected = ['product', 'consumer_complaint_narrative']
+    selected = ['category_name', 'description']
     non_selected = list(set(df.columns) - set(selected))
 
     df = df.drop(non_selected, axis=1) # Drop non selected columns

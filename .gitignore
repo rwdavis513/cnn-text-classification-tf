@@ -1,9 +1,11 @@
 *.idea
+labels.json
 *.npy
 runs/
-
+.DS_Store
 # Created by https://www.gitignore.io/api/python,ipythonnotebook
-
+*runs/
+*.pytest_cache
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
