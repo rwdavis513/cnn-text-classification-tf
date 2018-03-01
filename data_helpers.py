@@ -2,6 +2,7 @@ import numpy as np
 import re
 import itertools
 from collections import Counter
+import pandas as pd
 
 
 def clean_str(string):
@@ -43,6 +44,27 @@ def load_data_and_labels(positive_data_file, negative_data_file):
     negative_labels = [[1, 0] for _ in negative_examples]
     y = np.concatenate([positive_labels, negative_labels], 0)
     return [x_text, y]
+
+
+def load_data_and_labels_text(filename):
+    """Load sentences and labels"""
+    df = pd.read_csv(filename, compression='zip', dtype={'consumer_complaint_narrative': object})
+    selected = ['product', 'consumer_complaint_narrative']
+    non_selected = list(set(df.columns) - set(selected))
+
+    df = df.drop(non_selected, axis=1) # Drop non selected columns
+    df = df.dropna(axis=0, how='any', subset=selected) # Drop null rows
+    df = df.reindex(np.random.permutation(df.index)) # Shuffle the dataframe
+
+    # Map the actual labels to one hot labels
+    labels = sorted(list(set(df[selected[0]].tolist())))
+    one_hot = np.zeros((len(labels), len(labels)), int)
+    np.fill_diagonal(one_hot, 1)
+    label_dict = dict(zip(labels, one_hot))
+
+    x_raw = df[selected[1]].apply(lambda x: clean_str(x)).tolist()
+    y_raw = df[selected[0]].apply(lambda y: label_dict[y]).tolist()
+    return x_raw, y_raw, df, labels
 
 
 def batch_iter(data, batch_size, num_epochs, shuffle=True):
