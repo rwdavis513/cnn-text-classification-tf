@@ -11,7 +11,7 @@ from text_cnn import TextCNN
 from config import FLAGS
 
 
-def session_setup():
+def session_setup(sess, cnn):
     # Define Training procedure
     global_step = tf.Variable(0, name="global_step", trainable=False)
     optimizer = tf.train.AdamOptimizer(1e-3)
@@ -58,7 +58,7 @@ def session_setup():
            checkpoint_prefix, saver, out_dir
 
 
-def step(x_batch, y_batch, train_or_dev='train', writer=None):
+def step(sess, cnn, x_batch, y_batch, train_op=None, train_summary_op=None, dev_summary_op=None, global_step=None, train_or_dev='train', writer=None):
     """
     Evaluates model on a dev set
     """
@@ -113,7 +113,7 @@ if __name__ == '__main__':
                 l2_reg_lambda=FLAGS.l2_reg_lambda)
 
             train_op, global_step, train_summary_op, train_summary_writer, dev_summary_writer, dev_summary_op, \
-                checkpoint_prefix, saver, out_dir  = session_setup()
+                checkpoint_prefix, saver, out_dir  = session_setup(cnn)
 
             # Write vocabulary
             vocab_processor.save(os.path.join(out_dir, "vocab"))
@@ -127,13 +127,13 @@ if __name__ == '__main__':
             # Training loop. For each batch...
             for batch in batches:
                 x_batch, y_batch = zip(*batch)
-                time_str, step_num, loss, accuracy = step(x_batch, y_batch, train_or_dev='train')
+                time_str, step_num, loss, accuracy = step(sess, cnn, x_batch, y_batch, train_op, train_summary_op, dev_summary_op, global_step, train_or_dev='train')
                 current_step = tf.train.global_step(sess, global_step)
                 if step_num % 10 == 0:
                     print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step_num, loss, accuracy))
                 if current_step % FLAGS.evaluate_every == 0:
                     print("\nEvaluation:")
-                    time_str, step_num, loss, accuracy = step(x_dev, y_dev, train_or_dev='dev', writer=dev_summary_writer)
+                    time_str, step_num, loss, accuracy = step(sess, cnn, x_dev, y_dev, train_op, train_summary_op, dev_summary_op, global_step, train_or_dev='dev', writer=dev_summary_writer)
                     print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step_num, loss, accuracy))
                     print("")
                 if current_step % FLAGS.checkpoint_every == 0:

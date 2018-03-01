@@ -103,7 +103,7 @@ def calculate_max_length(x_text):
     return max(x_lengths)
 
 
-def load_data():
+def load_data(train_or_eval=None):
     # Load data
     print("Loading data...")
     if FLAGS.accounting_data_file:
@@ -114,6 +114,10 @@ def load_data():
         x_text, y = load_movie_reviews(FLAGS.positive_data_file, FLAGS.negative_data_file)
 
     print("x_text: {} y: {}".format(len(x_text), len(y)))
+
+    if train_or_eval == 'evaluation':
+        return x_text, y
+
     # Build vocabulary
     max_document_length = calculate_max_length(x_text)
 

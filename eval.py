@@ -8,68 +8,73 @@ from tensorflow.contrib import learn
 import csv
 from config import FLAGS
 
-print("\nParameters:")
-for attr, value in sorted(FLAGS.__flags.items()):
-    print("{}={}".format(attr.upper(), value))
-print("")
 
-# CHANGE THIS: Load data. Load your own data here
-if FLAGS.eval_train:
-    print("Using training data for evaluation...")
-    x_raw, y_test = data_helpers.load_data('accounting_data')
-    y_test = np.argmax(y_test, axis=1)
-else:
-    x_raw = ["a masterpiece four years in the making", "everything is off."]
-    y_test = [1, 0]
+def load_data_for_eval():
+    # CHANGE THIS: Load data. Load your own data here
+    if FLAGS.eval_train:
+        print("Using training data for evaluation...")
+        x_raw, y_test = data_helpers.load_data(train_or_eval='evaluation')
 
-# Map data into vocabulary
-vocab_path = os.path.join(FLAGS.checkpoint_dir, "..", "vocab")
-vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_path)
-x_test = np.array(list(vocab_processor.transform(x_raw)))
+        # Applicable for Movie review data
+        if not FLAGS.accounting_data_file:
+            y_test = np.argmax(y_test, axis=1)
+    else:
+        x_raw = ["a masterpiece four years in the making", "everything is off."]
+        y_test = [1, 0]
 
-print("\nEvaluating...\n")
+    # Map data into vocabulary
+    vocab_path = os.path.join(FLAGS.checkpoint_dir, "..", "vocab")
+    vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_path)
+    x_test = np.array(list(vocab_processor.transform(x_raw)))
+    return x_test, y_test
 
-# Evaluation
-# ==================================================
-checkpoint_file = tf.train.latest_checkpoint(FLAGS.checkpoint_dir)
-graph = tf.Graph()
-with graph.as_default():
-    session_conf = tf.ConfigProto(
-      allow_soft_placement=FLAGS.allow_soft_placement,
-      log_device_placement=FLAGS.log_device_placement)
-    sess = tf.Session(config=session_conf)
-    with sess.as_default():
-        # Load the saved meta graph and restore variables
-        saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
-        saver.restore(sess, checkpoint_file)
 
-        # Get the placeholders from the graph by name
-        input_x = graph.get_operation_by_name("input_x").outputs[0]
-        # input_y = graph.get_operation_by_name("input_y").outputs[0]
-        dropout_keep_prob = graph.get_operation_by_name("dropout_keep_prob").outputs[0]
+if __name__ == '__main__':
 
-        # Tensors we want to evaluate
-        predictions = graph.get_operation_by_name("output/predictions").outputs[0]
+    print("\nEvaluating...\n")
+    x_test, y_test = load_data_for_eval()
 
-        # Generate batches for one epoch
-        batches = data_helpers.batch_iter(list(x_test), FLAGS.batch_size, 1, shuffle=False)
+    # Evaluation
+    # ==================================================
+    checkpoint_file = tf.train.latest_checkpoint(FLAGS.checkpoint_dir)
+    graph = tf.Graph()
+    with graph.as_default():
+        session_conf = tf.ConfigProto(
+          allow_soft_placement=FLAGS.allow_soft_placement,
+          log_device_placement=FLAGS.log_device_placement)
+        sess = tf.Session(config=session_conf)
+        with sess.as_default():
+            # Load the saved meta graph and restore variables
+            saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
+            saver.restore(sess, checkpoint_file)
 
-        # Collect the predictions here
-        all_predictions = []
+            # Get the placeholders from the graph by name
+            input_x = graph.get_operation_by_name("input_x").outputs[0]
+            # input_y = graph.get_operation_by_name("input_y").outputs[0]
+            dropout_keep_prob = graph.get_operation_by_name("dropout_keep_prob").outputs[0]
 
-        for x_test_batch in batches:
-            batch_predictions = sess.run(predictions, {input_x: x_test_batch, dropout_keep_prob: 1.0})
-            all_predictions = np.concatenate([all_predictions, batch_predictions])
+            # Tensors we want to evaluate
+            predictions = graph.get_operation_by_name("output/predictions").outputs[0]
 
-# Print accuracy if y_test is defined
-if y_test is not None:
-    correct_predictions = float(sum(all_predictions == y_test))
-    print("Total number of test examples: {}".format(len(y_test)))
-    print("Accuracy: {:g}".format(correct_predictions/float(len(y_test))))
+            # Generate batches for one epoch
+            batches = data_helpers.batch_iter(list(x_test), FLAGS.batch_size, 1, shuffle=False)
 
-# Save the evaluation to a csv
-predictions_human_readable = np.column_stack((np.array(x_raw), all_predictions))
-out_path = os.path.join(FLAGS.checkpoint_dir, "..", "prediction.csv")
-print("Saving evaluation to {0}".format(out_path))
-with open(out_path, 'w') as f:
-    csv.writer(f).writerows(predictions_human_readable)
+            # Collect the predictions here
+            all_predictions = []
+
+            for x_test_batch in batches:
+                batch_predictions = sess.run(predictions, {input_x: x_test_batch, dropout_keep_prob: 1.0})
+                all_predictions = np.concatenate([all_predictions, batch_predictions])
+
+    # Print accuracy if y_test is defined
+    if y_test is not None:
+        correct_predictions = float(sum(np.transpose(all_predictions) == y_test))
+        print("Total number of test examples: {}".format(len(y_test)))
+        print("Accuracy: {:g}".format(correct_predictions/float(len(y_test))))
+
+    # Save the evaluation to a csv
+    # predictions_human_readable = np.column_stack((np.array(x_raw), all_predictions))
+    # out_path = os.path.join(FLAGS.checkpoint_dir, "..", "prediction.csv")
+    # print("Saving evaluation to {0}".format(out_path))
+    # with open(out_path, 'w') as f:
+    #     csv.writer(f).writerows(predictions_human_readable)
