@@ -52,21 +52,22 @@ print("Loading data...")
 print(FLAGS.train_file)
 #x_text, y = data_helpers.load_data_and_labels(FLAGS.positive_data_file, FLAGS.negative_data_file)
 x_raw, y_raw, df, labels = data_helpers.load_data_and_labels_text(FLAGS.train_file)
-
+print("Building vocab...")
 # Build vocabulary
 max_document_length = max([len(x.split(" ")) for x in x_raw])
 vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
 x = np.array(list(vocab_processor.fit_transform(x_raw)))
 y = np.array(y_raw)
 
+print("Dividing test and train splits...")
 """Step 2: split the original dataset into train and test sets"""
-x_, x_test, y_, y_test = train_test_split(x, y, test_size=0.1, random_state=42)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1, random_state=42)
 
 """Step 3: shuffle the train set and split the train set into train and dev sets"""
-shuffle_indices = np.random.permutation(np.arange(len(y_)))
-x_shuffled = x_[shuffle_indices]
-y_shuffled = y_[shuffle_indices]
-x_train, x_dev, y_train, y_dev = train_test_split(x_shuffled, y_shuffled, test_size=0.1)
+# shuffle_indices = np.random.permutation(np.arange(len(y_)))
+# x_shuffled = x_[shuffle_indices]
+# y_shuffled = y_[shuffle_indices]
+#x_train, x_dev, y_train, y_dev = train_test_split(x_shuffled, y_shuffled, test_size=0.1)
 
 """Step 4: save the labels into labels.json since predict.py needs it"""
 with open('./labels.json', 'w') as outfile:
